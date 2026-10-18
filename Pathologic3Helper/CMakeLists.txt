@@ -56,3 +56,8 @@ set_target_properties(Pathologic3Helper PROPERTIES
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(Pathologic3Helper)
 endif()
+
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    WIN32_EXECUTABLE TRUE
+    VS_DOTNET_REFERENCES ""
+)

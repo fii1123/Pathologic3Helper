@@ -12,7 +12,6 @@ void LP3E_Fill(Ui::MainWindow *mw, QList<P3Event> *QL, QString text, QString val
     mw->EventVLayout->addWidget(QL->last().CB);
 }
 
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -51,8 +50,6 @@ MainWindow::MainWindow(QWidget *parent)
     LP3E_Fill(ui, &ListP3Events, "Секрет Симона", "<Name>Know_Main_YouAreSimon</Name>");
     LP3E_Fill(ui, &ListP3Events, "Секрет Многогранника", "<Name>Know_Main_RodOfPolyhedron</Name>");
 
-
-
     QString qstr;
     for (var = 0; var < 9; ++var) {
         qstr = "Shabnak_Dead_Day" + QString::number(var + 3) + "CheckBox";
@@ -67,36 +64,6 @@ MainWindow::MainWindow(QWidget *parent)
     // Создание директории
     currdir = new QDir();
     currdir->mkdir("tmp");
-
-    SaveFilePath = QStandardPaths::writableLocation
-            (QStandardPaths::AppConfigLocation);
-    SaveFilePath.remove(SaveFilePath.lastIndexOf('/'), 18);
-    SaveFilePath += "Low/Ice-Pick Lodge/Pathologic 3/Saves/Default/";
-    QDir *qd = new QDir(SaveFilePath);
-    qd->setFilter(QDir::Files);
-    qd->setSorting(QDir::Time);
-
-    SaveFilePath = qd->filePath(qd->entryInfoList().at(0).fileName());
-
-    QFile curr_file(SaveFilePath);
-    curr_file.open(QFile::ReadOnly);
-
-    QMessageBox QMB(this);
-
-    if (!curr_file.isOpen()) {
-        QMB.setWindowTitle("Не удалось открыть файл!");
-        QMB.setText("Файл сохранения обычно лежит по пути:\n"
-                    "%AppData%\\..\\LocalLow\\Ice-Pick Lodge\\Pathologic 3\\Saves\\Default ");
-        QMB.exec();
-    } else {
-        QMB.setWindowTitle("Найдено сохранение!");
-        QMB.setText("Будет загружен самый свежий файл сохранения!");
-        QMB.exec();
-
-        curr_file.close();
-        ui->SaveFileLineEdit->setText(SaveFilePath);
-        LoadSaveFile();
-    }
 }
 
 MainWindow::~MainWindow()
@@ -352,5 +319,39 @@ void MainWindow::on_InfoButton_clicked()
                              "и спорных решений, которые портят впечатление от игры.\n"
                              "Автор: FIA\n"
                              "Email: f2000_99@mail.ru\n");
+}
+
+
+void MainWindow::on_AutoFindButton_clicked()
+{
+    SaveFilePath = QStandardPaths::writableLocation
+            (QStandardPaths::AppConfigLocation);
+    SaveFilePath.remove(SaveFilePath.lastIndexOf('/'), 18);
+    SaveFilePath += "Low/Ice-Pick Lodge/Pathologic 3/Saves/Default/";
+    QDir *qd = new QDir(SaveFilePath);
+    qd->setFilter(QDir::Files);
+    qd->setSorting(QDir::Time);
+
+    SaveFilePath = qd->filePath(qd->entryInfoList().at(0).fileName());
+
+    QFile curr_file(SaveFilePath);
+    curr_file.open(QFile::ReadOnly);
+
+    QMessageBox QMB(this);
+
+    if (!curr_file.isOpen()) {
+        QMB.setWindowTitle("Не удалось открыть файл!");
+        QMB.setText("Файл сохранения обычно лежит по пути:\n"
+                    "%AppData%\\..\\LocalLow\\Ice-Pick Lodge\\Pathologic 3\\Saves\\Default ");
+        QMB.exec();
+    } else {
+        QMB.setWindowTitle("Найдено сохранение!");
+        QMB.setText("Будет загружен самый свежий файл сохранения!");
+        QMB.exec();
+
+        curr_file.close();
+        ui->SaveFileLineEdit->setText(SaveFilePath);
+        LoadSaveFile();
+    }
 }
 

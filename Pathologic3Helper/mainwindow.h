@@ -43,6 +43,8 @@ private slots:
 
     void on_InfoButton_clicked();
 
+    void on_AutoFindButton_clicked();
+
 private:
     Ui::MainWindow *ui;
 
