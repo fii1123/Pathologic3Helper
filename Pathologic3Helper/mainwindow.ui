@@ -10,6 +10,12 @@
     <height>966</height>
    </rect>
   </property>
+  <property name="font">
+   <font>
+    <family>Bad Script</family>
+    <pointsize>16</pointsize>
+   </font>
+  </property>
   <property name="windowTitle">
    <string>Pathologic 3 helper</string>
   </property>
@@ -186,7 +192,7 @@
              <item>
               <widget class="QLabel" name="ApatItemsMultiplierLabel">
                <property name="text">
-                <string>Множитель Апатии</string>
+                <string>Множитель зависимости</string>
                </property>
               </widget>
              </item>
@@ -219,14 +225,6 @@
              </item>
              <item>
               <widget class="QSlider" name="ApatItemsMultiplierHSlider">
-               <property name="styleSheet">
-                <string notr="true"> QSlider::handle:horizontal {
-                border: 1px  red;
-                background: red;
-            }
-
-</string>
-               </property>
                <property name="maximum">
                 <number>100</number>
                </property>
@@ -301,14 +299,6 @@
              </item>
              <item>
               <widget class="QSlider" name="RevolverBulletsHSlider">
-               <property name="styleSheet">
-                <string notr="true"> QSlider::handle:horizontal {
-                border: 1px  red;
-                background: red;
-            }
-
-</string>
-               </property>
                <property name="maximum">
                 <number>6</number>
                </property>
@@ -383,14 +373,6 @@
              </item>
              <item>
               <widget class="QSlider" name="SprayAmmoCountHSlider">
-               <property name="styleSheet">
-                <string notr="true"> QSlider::handle:horizontal {
-                border: 1px  red;
-                background: red;
-            }
-
-</string>
-               </property>
                <property name="maximum">
                 <number>20</number>
                </property>
@@ -426,7 +408,18 @@
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
-          <layout class="QVBoxLayout" name="EventVLayout"/>
+          <layout class="QVBoxLayout" name="EventVLayout">
+           <item>
+            <widget class="QPushButton" name="LeapOfFaith">
+             <property name="cursor">
+              <cursorShape>PointingHandCursor</cursorShape>
+             </property>
+             <property name="text">
+              <string>Забыть прыжок Евы</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
          </item>
         </layout>
        </widget>
@@ -442,8 +435,20 @@
          </item>
          <item>
           <widget class="QCheckBox" name="ShabnakCheckBox">
+           <property name="font">
+            <font>
+             <family>Bad Script</family>
+             <pointsize>16</pointsize>
+            </font>
+           </property>
            <property name="styleSheet">
-            <string notr="true">background-color: rgb(58, 58, 58);</string>
+            <string notr="true">QCheckBox {
+background-color: rgb(58, 58, 58);
+}
+QCheckBox::indicator {
+width: 25px;
+height: 25px;
+}</string>
            </property>
            <property name="text">
             <string>Её не существует</string>

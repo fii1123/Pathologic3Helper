@@ -45,6 +45,8 @@ private slots:
 
     void on_AutoFindButton_clicked();
 
+    void on_LeapOfFaith_clicked();
+
 private:
     Ui::MainWindow *ui;
 
@@ -56,13 +58,11 @@ private:
     QFile *currfile;    // Файл текущего дня
     QStringList lines; // список всех параметров
 
-    void CheckPlayerValues(QTextStream *in, QString line, QSlider *HS, QString text);
-    void CheckValues(QTextStream *in, QString line, QCheckBox *CH, QString text);
+    void CheckPlayerValues(QSlider *HS, QString text);
+    void CheckValues(QCheckBox *CH, QString text);
 
-    void SetTrueValues(QString text);
-    void SetFalseValues(QString text);
-
-    void SetValues(QCheckBox *CB, QString text);
+    void SetPlayerValues(QString text, QString val);
+    void SetValues(QString text, bool val);
 
 };
 #endif // MAINWINDOW_H

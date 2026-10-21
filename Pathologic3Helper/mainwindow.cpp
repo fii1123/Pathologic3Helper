@@ -28,7 +28,6 @@ MainWindow::MainWindow(QWidget *parent)
         "    color: white;"
         "    font: 16pt 'Bad Script';"
         "}"
-
         "QPushButton {"
         "    color: white;"
         "    border: 1px solid gray;"
@@ -36,9 +35,13 @@ MainWindow::MainWindow(QWidget *parent)
         "    padding: 0px 8px;"
         "    background-color: rgb(0, 0, 0);"
         "}"
-
         "QPushButton:hover {"
         "    color: red;"
+        "}"
+        "QSlider::handle:horizontal {"
+            "border: 1px  red;"
+            "background: red;"
+            "border-radius: 8px;"
         "}"
     );
 
@@ -46,9 +49,10 @@ MainWindow::MainWindow(QWidget *parent)
     int var = 0;
 
     // События
-    LP3E_Fill(ui, &ListP3Events, "Улица в Створках", "<Name>Know_BachelorWalkedDownTheStreet</Name>");
-    LP3E_Fill(ui, &ListP3Events, "Секрет Симона", "<Name>Know_Main_YouAreSimon</Name>");
-    LP3E_Fill(ui, &ListP3Events, "Секрет Многогранника", "<Name>Know_Main_RodOfPolyhedron</Name>");
+    LP3E_Fill(ui, &ListP3Events, "Улица в Створках", "Know_BachelorWalkedDownTheStreet");
+    LP3E_Fill(ui, &ListP3Events, "Секрет Симона", "Know_Main_YouAreSimon");
+    LP3E_Fill(ui, &ListP3Events, "Просьба Уклада", "Intro_Station_ToBride");
+
 
     QString qstr;
     for (var = 0; var < 9; ++var) {
@@ -60,6 +64,8 @@ MainWindow::MainWindow(QWidget *parent)
         qstr.toStdString().c_str(), nullptr));
         ui->verticalLayout_3->addWidget(Shabnak_Dead_CheckBox[var]);
     }
+
+    ui->ShabnakCheckBox->setChecked(true);
 
     // Создание директории
     currdir = new QDir();
@@ -73,12 +79,13 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::CheckPlayerValues(QTextStream *in, QString line, QSlider *HS, QString text)
+void MainWindow::CheckPlayerValues(QSlider *HS, QString text)
 {
     float var_f = 0;
-    if (line == "\t\t\t\t\t\t" + text) {
-        line = in->readLine(); lines << line;
-        line = in->readLine(); lines << line;
+    int var_i = lines.indexOf("\t\t\t\t\t\t" + text);
+    if (var_i != -1) {
+        QString line = lines.at(var_i + 2);
+
         line.remove(0, line.indexOf('>') + 1);
         line.remove(line.indexOf('<'), line.indexOf('>'));
         var_f = line.toFloat();
@@ -89,32 +96,31 @@ void MainWindow::CheckPlayerValues(QTextStream *in, QString line, QSlider *HS, Q
     }
 }
 
-void MainWindow::CheckValues(QTextStream *in, QString line, QCheckBox *CH, QString text)
+void MainWindow::CheckValues(QCheckBox *CH, QString text)
 {
-    if (line == "\t\t\t\t\t\t\t\t" + text) {
-        line = in->readLine(); lines << line;
-        CH->setChecked(line == "\t\t\t\t\t\t\t\t<Value>true</Value>");
+    int var_i = lines.indexOf("\t\t\t\t\t\t\t\t<Name>" + text + "</Name>");
+    if (var_i != -1) {
+        CH->setChecked(lines.at(var_i + 1) == "\t\t\t\t\t\t\t\t<Value>true</Value>");
     }
 }
 
-void MainWindow::SetTrueValues(QString text)
+void MainWindow::SetPlayerValues(QString text, QString val)
+{
+    int var = lines.indexOf("\t\t\t\t\t\t" + text);
+    lines[var + 2] = "\t\t\t\t\t\t<Value>" + val + "</Value>";
+}
+
+void MainWindow::SetValues(QString text, bool val)
 {
     int inx;
-    inx = lines.indexOf("\t\t\t\t\t\t\t\t" + text);
-    if (lines[inx + 1] != "\t\t\t\t\t\t\t\t<Value>true</Value>")
+    inx = lines.indexOf("\t\t\t\t\t\t\t\t<Name>" + text + "</Name>");
+
+    if (val && lines[inx + 1] != "\t\t\t\t\t\t\t\t<Value>true</Value>")
     {
         lines.insert(inx + 1, "\t\t\t\t\t\t\t\t<Value>true</Value>");
-    }
-}
-
-void MainWindow::SetFalseValues(QString text)
-{
-    int inx;
-    inx = lines.indexOf("\t\t\t\t\t\t\t\t" + text);
-    if (lines[inx + 1] == "\t\t\t\t\t\t\t\t<Value>true</Value>")
-    {
+    } else if (!val && lines[inx + 1] == "\t\t\t\t\t\t\t\t<Value>true</Value>") {
         lines.removeAt(inx + 1);
-    };
+    }
 }
 
 void MainWindow::LoadSaveFile()
@@ -135,7 +141,6 @@ void MainWindow::LoadSaveFile()
 
         if (!currfile->isOpen()) {
             QMessageBox::critical(this, "Ошибка файла", "Не удалось открыть файл");
-            exit(1);
         }
         else {
             int var_int = 0;
@@ -146,39 +151,32 @@ void MainWindow::LoadSaveFile()
             // Запись всех параметров
             QTextStream in(currfile);
             QString line = "";
-
-            // Перемотка для оптимизации
-            for (int i = 0; i < 40000; ++i) {
-                line = in.readLine();
-                lines << line;
-            }
-
-            int var = 0;
             while (!in.atEnd()) {
                 line = in.readLine();
                 lines << line;
-
-                // Параметры персонажа
-                CheckPlayerValues(&in, line, ui->ApatItemsMultiplierHSlider, "<Key>ApatItemsMultiplier</Key>");
-                CheckPlayerValues(&in, line, ui->RevolverBulletsHSlider, "<Key>RevolverBullets</Key>");
-                CheckPlayerValues(&in, line, ui->SprayAmmoCountHSlider, "<Key>SprayAmmoCount</Key>");
-
-                // События
-                for (var = 0; var < ListP3Events.length(); ++var) {
-                    CheckValues(&in, line, ListP3Events.at(var).CB, ListP3Events.at(var).values);
-                }
-
-                CheckValues(&in, line, ui->ShabnakCheckBox, "<Name>Shabnak_Enable</Name>");
-
-                // Её не существует
-                for (var = 0; var < 9; ++var) {
-                    CheckValues(&in, line, Shabnak_Dead_CheckBox[var],
-                    "<Name>Shabnak_Dead_Day" + QString::number(var + 3) + "</Name>");
-                }
             }
 
+            // Параметры персонажа
+            CheckPlayerValues(ui->ApatItemsMultiplierHSlider, "<Key>ApatItemsMultiplier</Key>");
+            CheckPlayerValues(ui->RevolverBulletsHSlider, "<Key>RevolverBullets</Key>");
+            CheckPlayerValues(ui->SprayAmmoCountHSlider, "<Key>SprayAmmoCount</Key>");
+
+            // События
+            int var = 0;
+            for (var = 0; var < ListP3Events.length(); ++var) {
+                CheckValues(ListP3Events.at(var).CB, ListP3Events.at(var).values);
+            }
+
+            CheckValues(ui->ShabnakCheckBox, "Shabnak_Enable");
+
+            // Её не существует
+            for (var = 0; var < 9; ++var) {
+                CheckValues(Shabnak_Dead_CheckBox[var],
+                "Shabnak_Dead_Day" + QString::number(var + 3));
+            }
         }
         currfile->close();
+        ui->LeapOfFaith->setStyleSheet("color: white");
 }
 
 void MainWindow::on_SaveFilePathButton_clicked()
@@ -225,89 +223,58 @@ void MainWindow::on_ShabnakCheckBox_stateChanged(int arg1)
     }
 
     for (int var = 0; var < 9; ++var) {
-        Shabnak_Dead_CheckBox[var]->setChecked(arg1);
+        Shabnak_Dead_CheckBox[var]->setChecked(!arg1);
     }
 
-}
-
-void MainWindow::SetValues(QCheckBox *CB, QString text)
-{
-    if (CB->isChecked()) {
-        SetTrueValues(text);
-    } else {
-        SetFalseValues(text);
-    }
 }
 
 void MainWindow::on_ApplyButton_clicked()
 {
-    int i = 0;
-    // События
-    for (i = 0; i < ListP3Events.length(); ++i) {
-        SetValues(ListP3Events.at(i).CB, ListP3Events.at(i).values);
-    }
-
-    if (ListP3Events.at(0).CB->isChecked()) {
-        SetTrueValues("<Name>Know_BachelorWalkedDownTheStreet</Name>");
-        SetTrueValues("<Name>Day0_Q8_BadTrip_Done</Name>");
-        SetTrueValues("<Name>Day0_Q8_LurichevaStreet_Visited</Name>");
-        SetTrueValues("<Name>Day0_Q8_LurichevaStreet_BadTrip</Name>");
+    if (SaveFilePath == "" || !currfile->exists()) {
+        QMessageBox::information(this, "Не выбран файл", "Выберите файл для обработки.");
     } else {
-        SetFalseValues("<Name>Know_BachelorWalkedDownTheStreet</Name>");
-        SetFalseValues("<Name>Day0_Q8_BadTrip_Done</Name>");
-        SetFalseValues("<Name>Day0_Q8_LurichevaStreet_Visited</Name>");
-        SetFalseValues("<Name>Day0_Q8_LurichevaStreet_BadTrip</Name>");
-    }
+        int i;
+        // События
+        for (i = 2; i < ListP3Events.length(); ++i) {
+            SetValues(ListP3Events.at(i).values, ListP3Events.at(i).CB->isChecked());
+        }
+        // События с улицы
+        SetValues("Know_BachelorWalkedDownTheStreet", ListP3Events.at(0).CB->isChecked());
+        SetValues("Day0_Q8_BadTrip_Done", ListP3Events.at(0).CB->isChecked());
+        SetValues("Day0_Q8_LurichevaStreet_Visited", ListP3Events.at(0).CB->isChecked());
+        SetValues("Day0_Q8_LurichevaStreet_BadTrip", ListP3Events.at(0).CB->isChecked());
 
+        SetPlayerValues("<Key>ApatItemsMultiplier</Key>",
+                        QString::number((float)ui->ApatItemsMultiplierHSlider->value() / 100));
+        SetPlayerValues("<Key>RevolverBullets</Key>", QString::number(ui->RevolverBulletsHSlider->value()));
+        SetPlayerValues("<Key>SprayAmmoCount</Key>", QString::number(ui->SprayAmmoCountHSlider->value()));
 
-    for (i = 0; i < lines.length(); ++i) {
-        if (lines[i] == "\t\t\t\t\t\t<Key>ApatItemsMultiplier</Key>") {
-            lines[i + 2] = "\t\t\t\t\t\t\t\t<Value>" +
-                    QString::number(ui->ApatItemsMultiplierHSlider->value())
-                    + "</Value>";
+        // Зачистка района
+        for (i = 0; i < 9; ++i) {
+            SetValues("Shabnak_Dead_Day" + QString::number(i + 3),
+                              Shabnak_Dead_CheckBox[i]->isChecked());
         }
 
-        if (lines[i] == "\t\t\t\t\t\t<Key>RevolverBullets</Key>") {
-            lines[i + 2] = "\t\t\t\t\t\t\t\t<Value>" +
-                    QString::number(ui->RevolverBulletsHSlider->value())
-                    + "</Value>";
-        }
+        currfile->open(QIODevice::WriteOnly);
+        QTextStream out(currfile);
 
-        if (lines[i] == "\t\t\t\t\t\t<Key>SprayAmmoCount</Key>") {
-            lines[i + 2] = "\t\t\t\t\t\t\t\t<Value>" +
-                    QString::number(ui->SprayAmmoCountHSlider->value())
-                    + "</Value>";
+        int inx = 0;
+        QString str = "";
+        for (const QString& line : lines) {
+            inx++;
+            out << line << "\n";
         }
+        currfile->close();
+
+        // Архивация
+        QString strcmd = "powershell Compress-Archive -Path '" + currdir->path() +
+                "/tmp/*' -DestinationPath '" + SaveFilePath + "'  -Force";
+
+        system(strcmd.toStdString().c_str());
+
+        QMessageBox::information(this, "Успех", "Файл успешно изменен!");
     }
 
-    // Зачистка района
-    for (i = 0; i < 9; ++i) {
-        if (Shabnak_Dead_CheckBox[i]->isChecked()) {
-            SetTrueValues("<Name>Shabnak_Dead_Day" + QString::number(i + 3) + "</Name>");
-        } else {
-            SetFalseValues("<Name>Shabnak_Dead_Day" + QString::number(i + 3) + "</Name>");
-        }
-    }
-
-    currfile->open(QIODevice::WriteOnly);
-    QTextStream out(currfile);
-
-    int inx = 0;
-    QString str = "";
-    for (const QString& line : lines) {
-        inx++;
-        out << line << "\n";
-    }
-    currfile->close();
-
-    // Архивация
-    QString strcmd = "powershell Compress-Archive -Path '" + currdir->path() +
-            "/tmp/*' -DestinationPath '" + SaveFilePath + "'  -Force";
-
-    system(strcmd.toStdString().c_str());
-
-
-    QMessageBox::information(this, "Успех", "Файл успешно изменен!");
 }
 
 void MainWindow::on_InfoButton_clicked()
@@ -320,7 +287,6 @@ void MainWindow::on_InfoButton_clicked()
                              "Автор: FIA\n"
                              "Email: f2000_99@mail.ru\n");
 }
-
 
 void MainWindow::on_AutoFindButton_clicked()
 {
@@ -352,6 +318,96 @@ void MainWindow::on_AutoFindButton_clicked()
         curr_file.close();
         ui->SaveFileLineEdit->setText(SaveFilePath);
         LoadSaveFile();
+    }
+}
+
+void MainWindow::on_LeapOfFaith_clicked()
+{
+    ui->LeapOfFaith->setStyleSheet("color: red");
+    // События Евы
+    QList <QString> QuestEva = {
+        "Day0_Q5_EvaBody_Done",
+        "Day0_Q5_EvaBody_Day1-9_Done",
+        "Day0_Q5_Cloud_Eva_Complete",
+        "Citizen_StairwayToHeaven_Complete",
+        "Day0_Q5_MM_NoDeath",
+        "Day0_Q5_MM_EvaDied",
+        "Day0_Q5_MM_Yesterday",
+        "Cutscene_Eva_Body_Done",
+        "Day0_Q5_MM_NoDeath_Resetable",
+        "Day0_Q5_MM_EvaDied_Resetable",
+        "Day0_Q5_MM_Yesterday_Resetable",
+        "Day0_Q6_EvaResurrection_Done",
+        "Day0_Q6_MM_Miracle ",
+        "Day0_Q6_MM_Resurrection ",
+        "Eva_Revival_Complete",
+        "Day0_Q6_MM_Miracle_Resetable",
+        "Day0_Q6_MM_Resurrection_Resetable",
+        "Day0_Q7_EvaAliveAgain_Done",
+        "Eva_Saved_Complete",
+        "Day10_Q1_LeapOfFaith_Done",
+        "Day10_Q1_LeapOfFaith_EvaFall",
+        "Day10_Q1_LeapOfFaith_Know",
+        "Day10_Q1_Eva_NoDeath_Complete",
+        "Shadows_Eva_LeapOfFaith_Complete",
+        "Day10_Q1_MM_NoDeathFinal",
+        "Day10_Q1_MM_NoDeathStart",
+        "Day10_Q1_MM_EvaDied",
+        "Day10_Q1_MM_NoDeathFinal_Resetable",
+        "Day10_Q1_MM_NoDeathStart_Resetable",
+        "Day10_Q1_MM_EvaDied_Resetable",
+        "Day10_Q11_EvaOnTheStairs_1_Done",
+        "Day10_Q11_EvaOnTheStairs_1_Force",
+        "Day10_Q11_EvaOnTheStairs_1_Know",
+        "Day10_Q11_Caretaker_Key_Complete",
+        "Day10_Q11_Tsipukh_Trespassing_Complete",
+        "Day10_Q11_Karminskiy_Roof_Complete",
+        "Day10_Q11_Cloud_AliveEva_Complete",
+        "Day10_Q11_Eva_Alive_Complete",
+        "Day10_Q11_SwampLights",
+        "Day10_Q11_Cloud_CathedralDoor_Complete",
+        "Day10_Q11_1_MM_KeyKeeper",
+        "Day10_Q11_1_MM_Serenity",
+        "Day10_Q11_1_MM_Eurydice",
+        "Day10_Q11_1_MM_Skies",
+        "Day10_Q11_1_MM_Cathedral",
+        "Day10_Q11_1_MM_KeyKeeper_Resetable",
+        "Day10_Q11_1_MM_Serenity_Resetable",
+        "Day10_Q11_1_MM_Eurydice_Resetable",
+        "Day10_Q11_1_MM_Skies_Resetable",
+        "Day10_Q11_1_MM_Cathedral_Resetable",
+        "Day10_Q11_EvaOnTheStairs_2_Done",
+        "Day10_Q11_EvaOnTheStairs_2_Force",
+        "Day10_Q11_EvaOnTheStairs_2_Know",
+        "Day10_Q11_Eva_Liminal_Complete",
+        "Day10_Q11_2_MM_ObserverEffect",
+        "Day10_Q11_2_MM_WhereIsMind",
+        "Day10_Q11_EvaOnTheStairs_3_Done",
+        "Day10_Q11_EvaOnTheStairs_3_Force",
+        "Day10_Q11_EvaOnTheStairs_3_Know",
+        "Day10_Q11_Caretaker_NoEva_Complete",
+        "Day10_Q11_Eva_Saved_Complete",
+        "Day10_Q11_3_MM_Choice",
+        "Day10_Q11_3_MM_Concentration",
+        "Day10_Q11_3_MM_Soul",
+        "Day10_Q11_3_MM_Freedom",
+        "Know_EvaIsAlive",
+        "Know_EvaIsLiminal",
+        "Day10_Q11_3_MM_Choice_Resetable",
+        "Day10_Q11_3_MM_Concentration_Resetable",
+        "Day10_Q11_3_MM_Soul_Resetable",
+        "Day10_Q11_3_MM_Freedom_Resetable",
+        "Day12_Eva_FateImmortal",
+        "Day12_Eva_FateLiminal",
+        "Day12_Eva_FateImmortal_Told",
+        "Day12_Eva_FateLiminal_Told",
+        "Day12_Q15_Eva_Final_Complete",
+        "Day12_Eva_FateImmortal_Told",
+        "Day12_Q15_LiminalEva_Final_Complete",
+        "Day12_Q15_Cloud_Eva_Final_Complete"
+    };
+    for (int i = 0; i < QuestEva.length(); ++i) {
+        SetValues(QuestEva[i], false);
     }
 }
 
