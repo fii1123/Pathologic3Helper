@@ -10,12 +10,6 @@
     <height>966</height>
    </rect>
   </property>
-  <property name="font">
-   <font>
-    <family>Bad Script</family>
-    <pointsize>16</pointsize>
-   </font>
-  </property>
   <property name="windowTitle">
    <string>Pathologic 3 helper</string>
   </property>
@@ -435,12 +429,6 @@
          </item>
          <item>
           <widget class="QCheckBox" name="ShabnakCheckBox">
-           <property name="font">
-            <font>
-             <family>Bad Script</family>
-             <pointsize>16</pointsize>
-            </font>
-           </property>
            <property name="styleSheet">
             <string notr="true">QCheckBox {
 background-color: rgb(58, 58, 58);

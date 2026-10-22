@@ -4,6 +4,8 @@
 #include <QStandardPaths>
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QFontDatabase>
+
 
 void LP3E_Fill(Ui::MainWindow *mw, QList<P3Event> *QL, QString text, QString values)
 {
@@ -19,14 +21,20 @@ MainWindow::MainWindow(QWidget *parent)
     // Стиль и отрисовка
     setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint
                    & ~Qt::WindowMaximizeButtonHint);
+    // Шрифт
+    int id = QFontDatabase::addApplicationFont(":/new/prefix1/Res/BadScript-Regular.ttf");
+    QString family = QFontDatabase::applicationFontFamilies(id).at(0);
+    QFont BSfont(family);
+    setFont(BSfont);
 
     ui->setupUi(this);
 
+    ui->ShabnakCheckBox->setFont(BSfont);
     this->setStyleSheet(
         "QWidget {"
         "    background-color: rgb(0, 0, 0);"
         "    color: white;"
-        "    font: 16pt 'Bad Script';"
+        "    font-size: 16pt;"
         "}"
         "QPushButton {"
         "    color: white;"
@@ -52,7 +60,6 @@ MainWindow::MainWindow(QWidget *parent)
     LP3E_Fill(ui, &ListP3Events, "Улица в Створках", "Know_BachelorWalkedDownTheStreet");
     LP3E_Fill(ui, &ListP3Events, "Секрет Симона", "Know_Main_YouAreSimon");
     LP3E_Fill(ui, &ListP3Events, "Просьба Уклада", "Intro_Station_ToBride");
-
 
     QString qstr;
     for (var = 0; var < 9; ++var) {
@@ -225,7 +232,6 @@ void MainWindow::on_ShabnakCheckBox_stateChanged(int arg1)
     for (int var = 0; var < 9; ++var) {
         Shabnak_Dead_CheckBox[var]->setChecked(!arg1);
     }
-
 }
 
 void MainWindow::on_ApplyButton_clicked()
@@ -240,28 +246,62 @@ void MainWindow::on_ApplyButton_clicked()
         }
         // События с улицы
         SetValues("Know_BachelorWalkedDownTheStreet", ListP3Events.at(0).CB->isChecked());
-        SetValues("Day0_Q8_BadTrip_Done", ListP3Events.at(0).CB->isChecked());
-        SetValues("Day0_Q8_LurichevaStreet_Visited", ListP3Events.at(0).CB->isChecked());
-        SetValues("Day0_Q8_LurichevaStreet_BadTrip", ListP3Events.at(0).CB->isChecked());
 
         SetPlayerValues("<Key>ApatItemsMultiplier</Key>",
                         QString::number((float)ui->ApatItemsMultiplierHSlider->value() / 100));
         SetPlayerValues("<Key>RevolverBullets</Key>", QString::number(ui->RevolverBulletsHSlider->value()));
         SetPlayerValues("<Key>SprayAmmoCount</Key>", QString::number(ui->SprayAmmoCountHSlider->value()));
 
+        QString tmpstr = "\t\t\t\t\t\t\t\t\t\t<Value>true</Value>\r\n";
         // Зачистка района
         for (i = 0; i < 9; ++i) {
             SetValues("Shabnak_Dead_Day" + QString::number(i + 3),
                               Shabnak_Dead_CheckBox[i]->isChecked());
+
+            QFile tmpfile("tmp/Day" + QString::number(i + 3) + ".xml");
+            if (tmpfile.exists()) {
+                tmpfile.open(QIODevice::ReadWrite);
+                if (tmpfile.isOpen()) {
+                    QTextStream tmpts(&tmpfile);
+                    QStringList tmpQSL;
+                    QString tmpline = "";
+                    while (!tmpfile.atEnd()) {
+                        tmpline = tmpfile.readLine();
+                        tmpQSL << tmpline;
+                    }
+
+                    int tmpinx = tmpQSL.indexOf("\t\t\t\t\t\t\t\t\t<Key>ShabnakMain</Key>\r\n");
+                    if (Shabnak_Dead_CheckBox[i]->isChecked() &&
+                            tmpQSL[tmpinx + 2] == tmpstr) {
+                        tmpQSL.removeAt(tmpinx + 2);
+                    } else if (!Shabnak_Dead_CheckBox[i]->isChecked() &&
+                               tmpQSL[tmpinx + 2] != tmpstr)
+                    {
+                        tmpQSL.insert(tmpinx + 2, tmpstr);
+                    }
+
+                    tmpts.seek(0);
+
+                    for (const QString& line : tmpQSL) {
+                        tmpts << line;
+                    }
+                    tmpfile.close();
+                }
+            }
+
         }
+
+        SetValues("Shabnak_Enable", ui->ShabnakCheckBox->isChecked());
+        SetValues("ShabnakMain", ui->ShabnakCheckBox->isChecked());
+
+        // пройтись по файлам дней
+
 
         currfile->open(QIODevice::WriteOnly);
         QTextStream out(currfile);
 
-        int inx = 0;
         QString str = "";
         for (const QString& line : lines) {
-            inx++;
             out << line << "\n";
         }
         currfile->close();

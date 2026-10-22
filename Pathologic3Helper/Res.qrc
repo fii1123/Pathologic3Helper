@@ -4,5 +4,6 @@
         <file>Res/Logo.PNG</file>
         <file>Res/Prototype.PNG</file>
         <file>Res/Revolver.PNG</file>
+        <file>Res/BadScript-Regular.ttf</file>
     </qresource>
 </RCC>
